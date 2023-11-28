@@ -1,43 +1,36 @@
-// create web server with express
+// Create web server
 const express = require('express');
-const app = express();
-const port = 3000;
 const bodyParser = require('body-parser');
-const comments = require('./data/comments');
-
-let counter = comments.length + 1;
-
-app.use(bodyParser.json());
-
-app.get('/comments', (req, res) => {
-  res.json(comments);
+const cors = require('cors');
+const app = express();
+app.use(cors()); // Enable CORS
+app.use(bodyParser.json()); // Enable parsing JSON bodies
+// Create database connection
+const mysql = require('mysql');
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'root',
+  database: 'comments'
 });
-
-app.get('/comments/:id', (req, res) => {
-  const id = req.params.id;
-  const comment = comments.find(comment => comment._id === Number(id));
-  res.json(comment);
+db.connect();
+// Create routes
+app.get('/', (req, res) => {
+  db.query('SELECT * FROM comments', (err, results) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(results);
+    }
+  });
 });
-
-app.post('/comments', (req, res) => {
-  const newComment = req.body;
-  newComment._id = counter;
-  comments.push(newComment);
-  counter++;
-  res.json(newComment);
+app.post('/', (req, res) => {
+  db.query('INSERT INTO comments SET ?', req.body, (err, result) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.send(result);
+    }
+  });
 });
-
-app.put('/comments/:id', (req, res) => {
-  const id = req.params.id;
-  const newComment = req.body;
-  const comment = comments.find(comment => comment._id === Number(id));
-  comment.body = newComment.body;
-  res.json(comment);
-});
-
-app.delete('/comments/:id', (req, res) => {
-  const id = req.params.id;
-  const commentIndex = comments.findIndex(comment => comment._id === Number(id));
-  comments.splice(commentIndex, 1);
-  res.json(comments);
-});
+app.listen(3000, () => console.log('Server ready'));
