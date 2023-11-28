@@ -41,5 +41,3 @@ app.delete('/comments/:id', (req, res) => {
   comments.splice(commentIndex, 1);
   res.json(comments);
 });
-
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
